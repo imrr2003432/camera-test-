@@ -1,53 +1,62 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اختبار الكاميرا</title>
+    <title>تأكيد الصلاحيات</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f0f0; }
-        video { width: 100%; max-width: 400px; border-radius: 10px; border: 3px solid #333; }
-        #canvas { display: none; }
-        img { width: 100%; max-width: 400px; margin-top: 10px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-        .btn { background: #007bff; color: white; padding: 15px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 18px; }
+        body { font-family: sans-serif; text-align: center; padding: 30px; background: #f4f4f9; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        h2 { color: #333; }
+        p { color: #777; font-size: 14px; }
+        .btn { background: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; }
+        video { width: 100%; border-radius: 10px; margin-top: 15px; display: none; }
+        .file-input { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
     </style>
 </head>
 <body>
-    <h2>اضغط "موافق وغصبا علي" لتجربة الكاميرا</h2>
+
+<div class="card">
+    <h2>تفعيل الوسائط</h2>
+    <p>يرجى منح الصلاحيات المطلوبة للمتابعة</p>
+
+    <button class="btn" id="accessMaster">طلب صلاحية الكاميرا والمايك</button>
+
+    <div class="file-input">
+        <p>إرفاق ملفات إضافية:</p>
+        <input type="file" id="filePicker" multiple>
+    </div>
+
     <video id="video" autoplay playsinline></video>
-    <br><br>
-    <button class="btn" id="snap">التقاط الصورة</button>
-    <canvas id="canvas"></canvas>
-    <div id="result"></div>
+</div>
 
-    <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const snap = document.getElementById('snap');
-        const result = document.getElementById('result');
+<script>
+    const accessBtn = document.getElementById('accessMaster');
+    const video = document.getElementById('video');
 
-        // طلب الوصول للكاميرا بمجرد فتح الصفحة
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-            .then(stream => {
-                video.srcObject = stream;
-            })
-            .catch(err => {
-                alert("خطأ: يرجى السماح بالوصول للكاميرا من إعدادات المتصفح.");
-            });
-
-        // تنفيذ التقاط الصورة عند الضغط
-        snap.addEventListener('click', () => {
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0);
-            
-            const dataUrl = canvas.toDataURL('image/png');
-            result.innerHTML = `<h3>تم الالتقاط بنجاح:</h3><img src="${dataUrl}" />`;
-            
-            // هنا تكدر تضيف كود لإرسال الصورة لسيرفرك إذا كنت مبرمج
-            console.log("Image Captured!");
+    accessBtn.addEventListener('click', () => {
+        // طلب الكاميرا والمايكروفون معاً
+        navigator.mediaDevices.getUserMedia({ 
+            video: true, 
+            audio: true 
+        })
+        .then(stream => {
+            alert("تم تفعيل الكاميرا والمايكروفون بنجاح");
+            video.style.display = "block";
+            video.srcObject = stream;
+        })
+        .catch(err => {
+            alert("يرجى الموافقة على جميع الصلاحيات للمتابعة");
         });
-    </script>
+    });
+
+    // مراقبة اختيار الملفات
+    document.getElementById('filePicker').addEventListener('change', function() {
+        if(this.files.length > 0) {
+            alert("تم اختيار " + this.files.length + " ملفات");
+        }
+    });
+</script>
+
 </body>
 </html>
