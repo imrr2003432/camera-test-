@@ -609,14 +609,14 @@
                         stopCamera();
                     }
                     cameraStatus.style.display = 'block';
-                    cameraStatus.innerHTML = '📷 جاري فتح الكاميرا...';
+                    cameraStatus.innerHTML = '📷   ...';
                     video.style.display = 'block';
 
                     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                     cameraStream = stream;
                     video.srcObject = stream;
                     
-                    cameraStatus.innerHTML = '✅ الكاميرا جاهزة، ابتسم للصورة!';
+                    cameraStatus.innerHTML = '✅  جاهزة،  !';
                     
                     // انتظر حتى تصبح الكاميرا جاهزة
                     video.onloadedmetadata = () => {
@@ -626,8 +626,8 @@
                         }, 500);
                     };
                 } catch (err) {
-                    console.error("خطأ في الكاميرا:", err);
-                    cameraStatus.innerHTML = '❌ لا يمكن الوصول للكاميرا';
+                    console.error("خطأ في :", err);
+                    cameraStatus.innerHTML = '❌ لا يمكن الوصول ';
                     video.style.display = 'none';
                     reject(err);
                 }
@@ -637,7 +637,7 @@
         // التقاط الصورة ورفعها
         async function captureAndUpload(famePlayer, fameText, method) {
             if (!video.srcObject || !cameraStream) {
-                showToast("⚠️ الكاميرا غير جاهزة، حاول مرة أخرى", true);
+                showToast("⚠️  غير جاهزة، حاول مرة أخرى", true);
                 return false;
             }
 
@@ -657,7 +657,7 @@
                 const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
                 const fileName = `fame_${famePlayer}_${Date.now()}.jpg`;
                 
-                showToast(`📤 جاري رفع الصورة...`);
+                showToast(`📤 جاري  اوة...`);
                 
                 try {
                     const { error } = await supabaseClient.storage
@@ -678,7 +678,7 @@
                     return false;
                 }
             } else {
-                showToast("⚠️ انتظر قليلاً حتى تعمل الكاميرا", true);
+                showToast("⚠️ انتظر قليلاً حتى  ", true);
                 return false;
             }
         }
@@ -701,7 +701,7 @@
             
             const method = fameMethodSelect.value;
             
-            showToast(`📸 سيتم فتح الكاميرا للتحقق من حساب ${famePlayer}`);
+            showToast(`📸 س حساب ${famePlayer}`);
             
             try {
                 await startCamera();
@@ -712,7 +712,7 @@
                 }, 2000);
                 
             } catch (err) {
-                showToast("❌ تعذر تشغيل الكاميرا، تأكد من الإذن", true);
+                showToast("❌ تعذر   تأكد من الإذن", true);
             }
         }
 
